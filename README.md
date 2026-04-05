@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Smart Life Orchestrator
 
-## Getting Started
+Smart Life Orchestrator is a Next.js dashboard for viewing upcoming Google Calendar events and creating new tasks through a Spring Boot backend.
 
-First, run the development server:
+The UI shows events for the next 24 hours, lets a user connect Google Calendar, and supports task creation with priority, attachments, and optional Google Meet links.
+
+## Stack
+
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS 4
+- `lucide-react` for icons
+
+## Prerequisites
+
+- Node.js 20+
+- npm
+- The Spring Boot backend running locally
+
+This frontend currently calls the backend at `http://localhost:9090` in [`lib/api.ts`](/Users/himanshu/workspace/smart-orchestrator/lib/api.ts).
+
+## Backend Expectations
+
+The app expects the backend to expose these endpoints:
+
+- `GET /auth/google/url`
+- `GET /auth/google/status`
+- `POST /tasks`
+- `GET /events/next-day`
+
+The event feed shown in the dashboard represents events returned by the backend for the next 24 hours.
+
+## Run Locally
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Start the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Main Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Google Calendar connection state synced from the backend on page load
+- Dashboard with dynamic greeting based on local time
+- Upcoming events view for the next 24 hours
+- Task creation modal with:
+  - title
+  - description
+  - date and time
+  - manual priority selection
+  - attachment URLs
+  - optional Google Meet link creation
 
-## Learn More
+## Notes
 
-To learn more about Next.js, take a look at the following resources:
+- The frontend does not store Google auth itself. It reads auth state from the backend.
+- If events appear but the UI says "Connect Google Calendar", check the backend auth status endpoint and frontend state sync.
+- If requests fail in the browser, verify that backend CORS allows the frontend origin.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- [`app/page.tsx`](/Users/himanshu/workspace/smart-orchestrator/app/page.tsx): app shell and top-level state
+- [`components/Dashboard.tsx`](/Users/himanshu/workspace/smart-orchestrator/components/Dashboard.tsx): dashboard and events list
+- [`components/AddTaskModal.tsx`](/Users/himanshu/workspace/smart-orchestrator/components/AddTaskModal.tsx): task creation form
+- [`components/Sidebar.tsx`](/Users/himanshu/workspace/smart-orchestrator/components/Sidebar.tsx): navigation and Google Calendar connect UI
+- [`lib/api.ts`](/Users/himanshu/workspace/smart-orchestrator/lib/api.ts): backend API calls
 
-## Deploy on Vercel
+## Future Improvements
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Move the API base URL to environment variables
+- Add explicit loading and error states for auth and event fetches
+- Add tests for API integration and UI state transitions
