@@ -1,15 +1,28 @@
 "use client";
 import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function AuthError() {
+function AuthErrorInner() {
+  const params = useSearchParams();
+  const provider = params.get("provider") ?? "google";
+
   useEffect(() => {
-    localStorage.setItem("google_auth_status", "error");
+    localStorage.setItem("calendar_auth_status", JSON.stringify({ provider, status: "error" }));
     window.close();
-  }, []);
+  }, [provider]);
 
   return (
     <div style={{ fontFamily: "sans-serif", padding: 40, textAlign: "center" }}>
-      <p>Authorization failed. Closing...</p>
+      <p>{provider === "microsoft" ? "Microsoft" : "Google"} Calendar authorization failed. Closing...</p>
     </div>
+  );
+}
+
+export default function AuthError() {
+  return (
+    <Suspense fallback={<div style={{ padding: 40, textAlign: "center" }}>Loading...</div>}>
+      <AuthErrorInner />
+    </Suspense>
   );
 }

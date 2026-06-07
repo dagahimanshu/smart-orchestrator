@@ -2,7 +2,7 @@
 
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { Plus, RefreshCw, ExternalLink, Calendar, Clock, AlertTriangle } from "lucide-react";
-import { Event } from "@/types";
+import { Event, ConnectionState } from "@/types";
 import { getNextDayEvents } from "@/lib/api";
 
 interface Props {
@@ -11,6 +11,7 @@ interface Props {
   loading: boolean;
   setLoading: Dispatch<SetStateAction<boolean>>;
   onAddTask: () => void;
+  connection: ConnectionState;
 }
 
 function formatTime(iso: string) {
@@ -22,7 +23,7 @@ function formatDate(iso: string) {
 
 function getGreeting() {
   const hour = new Date().getHours();
-  if (hour < 4) return "Good night"
+  if (hour < 4) return "Good night";
   if (hour < 12) return "Good morning";
   if (hour < 17) return "Good afternoon";
   return "Good evening";
@@ -67,20 +68,22 @@ function SkeletonCard() {
   );
 }
 
-export default function Dashboard({ events, setEvents, loading, setLoading, onAddTask }: Props) {
-  const fetch = async () => {
+export default function Dashboard({ events, setEvents, loading, setLoading, onAddTask, connection }: Props) {
+  const fetchEvents = async () => {
+    if (!connection.connected || !connection.provider) return;
     setLoading(true);
-    try { setEvents(await getNextDayEvents()); }
-    catch { /* silent in demo */ }
+    try { setEvents(await getNextDayEvents(connection.provider)); }
+    catch { setEvents([]); }
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetch(); }, []); // eslint-disable-line
+  useEffect(() => { fetchEvents(); }, [connection.connected, connection.provider]); // eslint-disable-line
 
   const urgent = events.filter(e => e.priority === "URGENT").length;
   const high   = events.filter(e => e.priority === "HIGH").length;
   const today  = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
   const greeting = getGreeting();
+  const providerLabel = connection.provider === "microsoft" ? "Microsoft" : "Google";
 
   return (
     <div>
@@ -89,10 +92,20 @@ export default function Dashboard({ events, setEvents, loading, setLoading, onAd
           <h1 className="page-title">{greeting} ✦</h1>
           <p className="page-subtitle">{today} · Your schedule at a glance</p>
         </div>
-        <button className="add-task-btn" onClick={onAddTask}>
+        <button className="add-task-btn" onClick={onAddTask} disabled={!connection.connected}>
           <Plus size={15} /> Add Task
         </button>
       </div>
+
+      {connection.connected && (
+        <div className="provider-badge-row">
+          <span className={`provider-badge ${connection.provider}`}>
+            <span className={`provider-dot ${connection.provider}`} />
+            {providerLabel} Calendar
+          </span>
+          <span className="provider-email">{connection.email}</span>
+        </div>
+      )}
 
       <DateStrip />
 
@@ -122,14 +135,20 @@ export default function Dashboard({ events, setEvents, loading, setLoading, onAd
 
       <div className="section-header">
         <h2 className="section-title">Upcoming Events</h2>
-        <button className="refresh-btn" onClick={fetch} disabled={loading}>
+        <button className="refresh-btn" onClick={fetchEvents} disabled={loading || !connection.connected}>
           <RefreshCw size={12} style={loading ? { animation: "spin 1s linear infinite" } : {}} />
           Refresh
         </button>
       </div>
 
       <div className="events-list">
-        {loading ? (
+        {!connection.connected ? (
+          <div className="empty-state">
+            <span className="empty-icon">🔗</span>
+            <div className="empty-title">No calendar connected</div>
+            <p className="empty-text">Enter your email in the sidebar to connect your Google or Microsoft calendar.</p>
+          </div>
+        ) : loading ? (
           <><SkeletonCard /><SkeletonCard /><SkeletonCard /></>
         ) : events.length === 0 ? (
           <div className="empty-state">
