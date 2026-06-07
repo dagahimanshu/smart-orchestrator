@@ -1,81 +1,115 @@
 # Smart Life Orchestrator
 
-Smart Life Orchestrator is a Next.js dashboard for viewing upcoming Google Calendar events and creating new tasks through a Spring Boot backend.
+A modern calendar dashboard that connects to Google Calendar or Microsoft Outlook. Features a 7-day week view with drag-and-drop, AI-powered task priority, recurring events, and delegate access to manage other people's calendars.
 
-The UI shows events for the next 24 hours, lets a user connect Google Calendar, and supports task creation with priority, attachments, and optional Google Meet links.
+## Features
 
-## Stack
+- **Landing page** with email-based login — auto-detects Google or Microsoft via DNS MX lookup
+- **Dashboard** — next 24 hours at a glance with stats and priority badges
+- **Calendar view** — 7-day week grid (like Google Calendar) with:
+  - Events as positioned, color-coded blocks
+  - Drag-and-drop to reschedule events
+  - Click-and-drag on empty slots to create tasks
+  - Week navigation (prev/next/today)
+  - Current time indicator
+- **Tasks view** — weekly event list grouped by day
+- **Settings** — account info, delegate management, disconnect
+- **Add Task modal** with:
+  - Title, description, date, start/end time
+  - Priority selector (LOW/MEDIUM/HIGH/URGENT)
+  - Recurrence (daily, weekly, weekdays, monthly, yearly)
+  - Google Meet / Teams link toggle
+  - Attachment URLs (Google only)
+  - Create on behalf of a delegate
+- **Delegate access** — request calendar access from others via magic link email, manage authorized delegates
 
-- Next.js 16
-- React 19
-- TypeScript
-- Tailwind CSS 4
-- `lucide-react` for icons
+## Tech Stack
+
+- Next.js 16, React 19, TypeScript
+- Custom CSS design system (no Tailwind runtime)
+- Lucide React icons
 
 ## Prerequisites
 
 - Node.js 20+
 - npm
-- The Spring Boot backend running locally
-
-This frontend currently calls the backend at `http://localhost:9090` in [`lib/api.ts`](/Users/himanshu/workspace/smart-orchestrator/lib/api.ts).
-
-## Backend Expectations
-
-The app expects the backend to expose these endpoints:
-
-- `GET /auth/google/url`
-- `GET /auth/google/status`
-- `POST /tasks`
-- `GET /events/next-day`
-
-The event feed shown in the dashboard represents events returned by the backend for the next 24 hours.
+- Smart Scheduler backend running on `http://localhost:9090`
 
 ## Run Locally
 
-Install dependencies:
-
 ```bash
 npm install
-```
-
-Start the development server:
-
-```bash
 npm run dev
 ```
 
 Open `http://localhost:3000`.
 
-## Main Features
+## Pages
 
-- Google Calendar connection state synced from the backend on page load
-- Dashboard with dynamic greeting based on local time
-- Upcoming events view for the next 24 hours
-- Task creation modal with:
-  - title
-  - description
-  - date and time
-  - manual priority selection
-  - attachment URLs
-  - optional Google Meet link creation
+| Route | Purpose |
+|-------|---------|
+| `/` | Landing page — email login + product info |
+| `/dashboard` | Main app (requires connection) |
+| `/auth/success` | OAuth popup callback |
+| `/auth/error` | OAuth error callback |
+| `/auth/delegate` | Delegate consent page (magic link target) |
+| `/auth/delegate/success` | Delegate auth success |
+| `/auth/delegate/error` | Delegate auth error |
 
-## Notes
+## Backend API
 
-- The frontend does not store Google auth itself. It reads auth state from the backend.
-- If events appear but the UI says "Connect Google Calendar", check the backend auth status endpoint and frontend state sync.
-- If requests fail in the browser, verify that backend CORS allows the frontend origin.
+The frontend calls the scheduler backend at `http://localhost:9090`. Key endpoints used:
+
+| Endpoint | Used by |
+|----------|---------|
+| `GET /auth/detect-provider?email=...` | Landing page (auto-detect provider) |
+| `GET /auth/{provider}/url` | OAuth flow |
+| `GET /auth/{provider}/status` | Auth state check |
+| `DELETE /auth/{provider}/disconnect` | Settings disconnect |
+| `POST /tasks` | Add Task modal |
+| `GET /events/next-day?provider=...` | Dashboard |
+| `GET /events/week?provider=...&startDate=...` | Calendar + Tasks views |
+| `PATCH /events/{id}` | Calendar drag-and-drop |
+| `POST /delegates/request` | Settings delegate request |
+| `GET /delegates` | Settings + AddTaskModal delegate list |
+| `DELETE /delegates/{email}` | Settings revoke delegate |
 
 ## Project Structure
 
-- [`app/page.tsx`](/Users/himanshu/workspace/smart-orchestrator/app/page.tsx): app shell and top-level state
-- [`components/Dashboard.tsx`](/Users/himanshu/workspace/smart-orchestrator/components/Dashboard.tsx): dashboard and events list
-- [`components/AddTaskModal.tsx`](/Users/himanshu/workspace/smart-orchestrator/components/AddTaskModal.tsx): task creation form
-- [`components/Sidebar.tsx`](/Users/himanshu/workspace/smart-orchestrator/components/Sidebar.tsx): navigation and Google Calendar connect UI
-- [`lib/api.ts`](/Users/himanshu/workspace/smart-orchestrator/lib/api.ts): backend API calls
+```
+app/
+├── page.tsx                    # Landing page
+├── layout.tsx                  # Root layout (Sora + DM Mono fonts)
+├── globals.css                 # Full design system
+├── dashboard/
+│   └── page.tsx                # Main dashboard shell + tab routing
+└── auth/
+    ├── success/page.tsx        # OAuth success (popup)
+    ├── error/page.tsx          # OAuth error (popup)
+    └── delegate/
+        ├── page.tsx            # Delegate consent page
+        ├── success/page.tsx    # Delegate auth success
+        └── error/page.tsx      # Delegate auth error
+components/
+├── Sidebar.tsx                 # Navigation + calendar connection
+├── Dashboard.tsx               # Stats + next-24h events
+├── CalendarView.tsx            # 7-day week grid + drag-and-drop
+├── TasksView.tsx               # Weekly task list by day
+├── SettingsView.tsx            # Account, delegates, disconnect
+└── AddTaskModal.tsx            # Task creation form
+lib/
+└── api.ts                      # All backend HTTP calls with logging
+types/
+└── index.ts                    # Shared TypeScript types
+```
 
-## Future Improvements
+## Design System
 
-- Move the API base URL to environment variables
-- Add explicit loading and error states for auth and event fetches
-- Add tests for API integration and UI state transitions
+Custom CSS variables in `globals.css` — no Tailwind utility classes. Key tokens:
+
+- Colors: `--navy`, `--slate`, `--muted`, `--rose`, `--blue-accent`, `--green-accent`, `--amber-accent`, `--urgent`
+- Typography: Sora (UI) + DM Mono (code/labels)
+- Spacing: `--radius`, `--radius-lg`
+- Effects: `--shadow`, `--shadow-md`, `--transition`
+
+Priority colors: URGENT (red), HIGH (rose), MEDIUM (amber), LOW (green)
