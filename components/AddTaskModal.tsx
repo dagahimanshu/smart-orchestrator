@@ -57,7 +57,7 @@ export default function AddTaskModal({ onClose, onAdd, setLoading, connection, p
     });
   };
 
-  const meetLabel = connection.provider === "microsoft" ? "Create Teams meeting link" : "Create Google Meet link";
+  const meetLabel = "Create Google Meet link";
 
   const handleSubmit = async () => {
     if (!form.title || !form.date || !form.time) { setError("Title, date, and time are required."); return; }

@@ -13,12 +13,11 @@ interface Props {
 function detectProvider(email: string, fallback: Provider | null): Provider {
   const domain = email.split("@")[1]?.toLowerCase() ?? "";
   if (domain.includes("gmail") || domain.includes("googlemail")) return "google";
-  if (domain.includes("outlook") || domain.includes("hotmail") || domain.includes("live.com") || domain.includes("microsoft")) return "microsoft";
   return fallback ?? "google";
 }
 
 export default function SettingsView({ connection, setConnection }: Props) {
-  const providerLabel = connection.provider === "microsoft" ? "Microsoft" : "Google";
+  const providerLabel = "Google";
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const [delegates, setDelegates] = useState<DelegateInfo[]>([]);

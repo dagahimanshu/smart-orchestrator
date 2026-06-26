@@ -164,7 +164,7 @@ export default function DashboardPage() {
                 Calendar not connected
               </div>
               <div className="connect-banner-text">
-                Connect your Google or Microsoft calendar to start scheduling.
+                Connect your Google calendar to start scheduling.
               </div>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
@@ -174,13 +174,6 @@ export default function DashboardPage() {
                 disabled={connectingCalendar}
               >
                 {connectingCalendar ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> : "Connect Google"}
-              </button>
-              <button
-                className="connect-banner-btn"
-                onClick={() => handleConnectCalendar("microsoft")}
-                disabled={connectingCalendar}
-              >
-                {connectingCalendar ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> : "Connect Microsoft"}
               </button>
             </div>
           </div>
@@ -213,7 +206,7 @@ export default function DashboardPage() {
           <div className="empty-state">
             <span className="empty-icon">📅</span>
             <p className="empty-title">Connect a calendar first</p>
-            <p className="empty-text">Use the banner above to connect Google or Microsoft calendar.</p>
+            <p className="empty-text">Use the banner above to connect Google calendar.</p>
           </div>
         )}
       </main>

@@ -34,7 +34,7 @@ export default function Sidebar({ activeTab, setActiveTab, connection, setConnec
             const result = await detectProvider(email);
 
             if (result.provider === "unknown") {
-                setError("Could not identify a Google or Microsoft calendar for this email.");
+                setError("Could not identify a Google calendar for this email.");
                 setDetecting(false);
                 return;
             }
@@ -95,7 +95,7 @@ export default function Sidebar({ activeTab, setActiveTab, connection, setConnec
         setError(null);
     };
 
-    const providerLabel = connection.provider === "microsoft" ? "Microsoft" : "Google";
+    const providerLabel = "Google";
     const isLoading = detecting || connecting;
 
     return (

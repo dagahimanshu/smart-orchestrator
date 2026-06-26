@@ -202,18 +202,6 @@ export default function LandingPage() {
                 )}
                 Continue with Google
               </button>
-              <button
-                className="social-btn"
-                onClick={() => handleSocialLogin("microsoft")}
-                disabled={isLoading}
-              >
-                {socialLoading === "microsoft" ? (
-                  <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
-                ) : (
-                  <Shield size={16} />
-                )}
-                Continue with Microsoft
-              </button>
             </>
           ) : (
             <>
@@ -281,17 +269,17 @@ export default function LandingPage() {
           <div className="feature-card">
             <div className="feature-icon-wrap"><Calendar size={20} /></div>
             <h3 className="feature-title">Unified Calendar</h3>
-            <p className="feature-desc">Works with both Google Calendar and Microsoft Outlook seamlessly.</p>
+            <p className="feature-desc">Works with Google Calendar seamlessly.</p>
           </div>
           <div className="feature-card">
             <div className="feature-icon-wrap"><Zap size={20} /></div>
             <h3 className="feature-title">Smart Scheduling</h3>
-            <p className="feature-desc">Create events with Meet or Teams links, attachments, and color-coded priorities.</p>
+            <p className="feature-desc">Create events with Meet links, attachments, and color-coded priorities.</p>
           </div>
           <div className="feature-card">
             <div className="feature-icon-wrap"><Shield size={20} /></div>
             <h3 className="feature-title">Secure by Design</h3>
-            <p className="feature-desc">OAuth-based auth. Your credentials stay with Google and Microsoft, never with us.</p>
+            <p className="feature-desc">OAuth-based auth. Your credentials stay with Google, never with us.</p>
           </div>
         </div>
       </section>

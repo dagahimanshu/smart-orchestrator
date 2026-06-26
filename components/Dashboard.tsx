@@ -83,7 +83,7 @@ export default function Dashboard({ events, setEvents, loading, setLoading, onAd
   const high   = events.filter(e => e.priority === "HIGH").length;
   const today  = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
   const greeting = getGreeting();
-  const providerLabel = connection.provider === "microsoft" ? "Microsoft" : "Google";
+  const providerLabel = "Google";
 
   return (
     <div>
@@ -146,7 +146,7 @@ export default function Dashboard({ events, setEvents, loading, setLoading, onAd
           <div className="empty-state">
             <span className="empty-icon">🔗</span>
             <div className="empty-title">No calendar connected</div>
-            <p className="empty-text">Enter your email in the sidebar to connect your Google or Microsoft calendar.</p>
+            <p className="empty-text">Enter your email in the sidebar to connect your Google calendar.</p>
           </div>
         ) : loading ? (
           <><SkeletonCard /><SkeletonCard /><SkeletonCard /></>
