@@ -113,3 +113,4 @@ Custom CSS variables in `globals.css` — no Tailwind utility classes. Key token
 - Effects: `--shadow`, `--shadow-md`, `--transition`
 
 Priority colors: URGENT (red), HIGH (rose), MEDIUM (amber), LOW (green)
+
