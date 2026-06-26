@@ -1,9 +1,112 @@
 import { Event, Provider } from "@/types";
 
-const BASE = "http://localhost:9090";
+const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:9090";
 
 function log(label: string, ...args: unknown[]) {
   console.log(`[API] ${label}`, ...args);
+}
+
+// ── JWT Token Management ─────────────────────────────────────────────────────
+
+function getToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("auth_token");
+}
+
+function setToken(token: string) {
+  localStorage.setItem("auth_token", token);
+}
+
+export function clearToken() {
+  localStorage.removeItem("auth_token");
+}
+
+function authHeaders(): Record<string, string> {
+  const token = getToken();
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  return headers;
+}
+
+export interface AuthResponse {
+  token: string;
+  email: string;
+  name: string;
+  calendarProvider: string | null;
+  calendarConnected: boolean;
+  loginMethod: string;
+}
+
+export async function signup(email: string, password: string, name: string): Promise<AuthResponse> {
+  log("signup →", email);
+  const res = await fetch(`${BASE}/auth/signup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password, name }),
+  });
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.error || "Signup failed");
+  }
+  const data = await res.json();
+  setToken(data.token);
+  return data;
+}
+
+export async function loginWithPassword(email: string, password: string): Promise<AuthResponse> {
+  log("loginWithPassword →", email);
+  const res = await fetch(`${BASE}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.error || "Login failed");
+  }
+  const data = await res.json();
+  setToken(data.token);
+  return data;
+}
+
+export async function loginWithOAuth(email: string, provider: Provider): Promise<AuthResponse> {
+  log("loginWithOAuth →", email, provider);
+  const res = await fetch(`${BASE}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, provider }),
+  });
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.error || "OAuth login failed");
+  }
+  const data = await res.json();
+  setToken(data.token);
+  return data;
+}
+
+export async function getMe(): Promise<AuthResponse | null> {
+  log("getMe →");
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const res = await fetch(`${BASE}/auth/me`, { headers: authHeaders() });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch { return null; }
+}
+
+export async function connectCalendar(provider: Provider): Promise<AuthResponse> {
+  log("connectCalendar →", provider);
+  const res = await fetch(`${BASE}/auth/connect-calendar`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ provider }),
+  });
+  if (!res.ok) throw new Error("Failed to connect calendar");
+  const data = await res.json();
+  setToken(data.token);
+  return data;
 }
 
 // ── Provider detection ────────────────────────────────────────────────────────
@@ -60,7 +163,7 @@ export async function getAuthUrl(provider: Provider): Promise<string> {
 export async function disconnectProvider(provider: Provider): Promise<void> {
   log("disconnectProvider →", provider);
   try {
-    const res = await fetch(`${BASE}/auth/${provider}/disconnect`, { method: "DELETE" });
+    const res = await fetch(`${BASE}/auth/${provider}/disconnect`, { method: "DELETE", headers: authHeaders() });
     log("disconnectProvider response", res.status);
     if (!res.ok) {
       const text = await res.text();
@@ -117,7 +220,7 @@ export async function createTask(payload: CreateTaskPayload): Promise<CreateTask
   try {
     const res = await fetch(`${BASE}/tasks`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders(),
       body: JSON.stringify(payload),
     });
     log("createTask response", res.status);
@@ -140,7 +243,7 @@ export async function createTask(payload: CreateTaskPayload): Promise<CreateTask
 export async function getNextDayEvents(provider: Provider = "google"): Promise<Event[]> {
   log("getNextDayEvents →", provider);
   try {
-    const res = await fetch(`${BASE}/events/next-day?provider=${provider}`);
+    const res = await fetch(`${BASE}/events/next-day?provider=${provider}`, { headers: authHeaders() });
     log("getNextDayEvents response", res.status);
     if (!res.ok) {
       const text = await res.text();
@@ -159,7 +262,7 @@ export async function getNextDayEvents(provider: Provider = "google"): Promise<E
 export async function getWeekEvents(provider: Provider = "google", startDate: string): Promise<Event[]> {
   log("getWeekEvents →", provider, startDate);
   try {
-    const res = await fetch(`${BASE}/events/week?provider=${provider}&startDate=${startDate}`);
+    const res = await fetch(`${BASE}/events/week?provider=${provider}&startDate=${startDate}`, { headers: authHeaders() });
     log("getWeekEvents response", res.status);
     if (!res.ok) {
       const text = await res.text();
@@ -180,7 +283,7 @@ export async function updateEvent(eventId: string, payload: { start: string; end
   try {
     const res = await fetch(`${BASE}/events/${encodeURIComponent(eventId)}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders(),
       body: JSON.stringify(payload),
     });
     log("updateEvent response", res.status);
@@ -208,7 +311,7 @@ export async function requestDelegateAccess(email: string, provider: Provider): 
   try {
     const res = await fetch(`${BASE}/delegates/request`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders(),
       body: JSON.stringify({ email, provider }),
     });
     log("requestDelegateAccess response", res.status);
@@ -225,7 +328,7 @@ export async function requestDelegateAccess(email: string, provider: Provider): 
 export async function listDelegates(): Promise<DelegateInfo[]> {
   log("listDelegates →");
   try {
-    const res = await fetch(`${BASE}/delegates`);
+    const res = await fetch(`${BASE}/delegates`, { headers: authHeaders() });
     log("listDelegates response", res.status);
     if (!res.ok) return [];
     const data = await res.json();
@@ -240,7 +343,7 @@ export async function listDelegates(): Promise<DelegateInfo[]> {
 export async function removeDelegate(email: string): Promise<void> {
   log("removeDelegate →", email);
   try {
-    const res = await fetch(`${BASE}/delegates/${encodeURIComponent(email)}`, { method: "DELETE" });
+    const res = await fetch(`${BASE}/delegates/${encodeURIComponent(email)}`, { method: "DELETE", headers: authHeaders() });
     log("removeDelegate response", res.status);
   } catch (err) {
     log("removeDelegate FAILED", err);

@@ -29,3 +29,11 @@ export interface UpdateEventPayload {
   end: string;
   provider: string;
 }
+
+export interface UserState {
+  email: string;
+  name: string;
+  calendarProvider: Provider | null;
+  calendarConnected: boolean;
+  loginMethod: string;
+}

@@ -46,7 +46,8 @@ function DelegateConsentInner() {
   }
 
   const handleAuthorize = () => {
-    window.location.href = `http://localhost:9090/delegates/authorize?token=${encodeURIComponent(token)}`;
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:9090";
+    window.location.href = `${apiUrl}/delegates/authorize?token=${encodeURIComponent(token)}`;
   };
 
   return (

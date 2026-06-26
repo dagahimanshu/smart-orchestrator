@@ -3,7 +3,7 @@
 import { Dispatch, SetStateAction, useState } from "react";
 import { LayoutDashboard, ListTodo, CalendarDays, Settings, CalendarCog, CheckCircle2, Loader2, LogOut, Mail } from "lucide-react";
 import { Tab, ConnectionState, Provider } from "@/types";
-import { detectProvider, getAuthUrl, disconnectProvider } from "@/lib/api";
+import { detectProvider, getAuthUrl, disconnectProvider, clearToken } from "@/lib/api";
 
 interface Props {
     activeTab: Tab;
@@ -89,6 +89,7 @@ export default function Sidebar({ activeTab, setActiveTab, connection, setConnec
             console.log("[Sidebar] Disconnecting", connection.provider);
             await disconnectProvider(connection.provider);
         }
+        clearToken();
         setConnection({ connected: false, provider: null, email: null });
         setEmail("");
         setError(null);

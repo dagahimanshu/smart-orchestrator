@@ -2,92 +2,122 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarCog, Mail, ArrowRight, Loader2, Zap, Brain, Calendar, Shield } from "lucide-react";
-import { detectProvider, getAuthUrl } from "@/lib/api";
+import { CalendarCog, Mail, Lock, User, ArrowRight, Loader2, Zap, Brain, Calendar, Shield } from "lucide-react";
+import { signup, loginWithPassword, loginWithOAuth, getAuthUrl, AuthResponse } from "@/lib/api";
 import { Provider } from "@/types";
+
+type AuthTab = "login" | "signup";
 
 export default function LandingPage() {
   const router = useRouter();
+  const [tab, setTab] = useState<AuthTab>("login");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleGetStarted = async () => {
-    console.log("[Landing] Get Started clicked, email:", email);
+  const handleAuthSuccess = (data: AuthResponse) => {
+    const connection = {
+      connected: data.calendarConnected,
+      provider: data.calendarProvider as Provider | null,
+      email: data.email,
+      name: data.name,
+      loginMethod: data.loginMethod,
+    };
+    localStorage.setItem("calendar_connection", JSON.stringify(connection));
+    router.push("/dashboard");
+  };
+
+  const handleLogin = async () => {
     if (!email || !email.includes("@")) { setError("Enter a valid email address"); return; }
+    if (!password) { setError("Enter your password"); return; }
     setError(null);
     setLoading(true);
-
     try {
-      console.log("[Landing] Detecting provider for:", email);
-      const result = await detectProvider(email);
-      console.log("[Landing] Provider detection result:", result);
+      const data = await loginWithPassword(email, password);
+      handleAuthSuccess(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed");
+      setLoading(false);
+    }
+  };
 
-      if (result.provider === "unknown") {
-        console.log("[Landing] Provider unknown, showing error");
-        setError("Could not identify a Google or Microsoft calendar for this email.");
-        setLoading(false);
-        return;
-      }
+  const handleSignup = async () => {
+    if (!name.trim()) { setError("Enter your name"); return; }
+    if (!email || !email.includes("@")) { setError("Enter a valid email address"); return; }
+    if (!password || password.length < 6) { setError("Password must be at least 6 characters"); return; }
+    setError(null);
+    setLoading(true);
+    try {
+      const data = await signup(email, password, name);
+      handleAuthSuccess(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Signup failed");
+      setLoading(false);
+    }
+  };
 
-      const provider = result.provider as Provider;
-
-      if (result.authorized) {
-        console.log("[Landing] Already authorized for", provider, "— redirecting to dashboard");
-        localStorage.setItem("calendar_connection", JSON.stringify({ connected: true, provider, email }));
-        router.push("/dashboard");
-        return;
-      }
-
-      console.log("[Landing] Not authorized, getting auth URL for", provider);
+  const handleSocialLogin = async (provider: Provider) => {
+    setError(null);
+    setSocialLoading(provider);
+    try {
       const url = await getAuthUrl(provider);
-      console.log("[Landing] Opening OAuth popup:", url.substring(0, 80) + "...");
       localStorage.removeItem("calendar_auth_status");
       const popup = window.open(url, `${provider}-auth`, "width=500,height=650,left=400,top=100");
-      console.log("[Landing] Popup opened:", popup ? "success" : "BLOCKED by browser");
 
       if (!popup) {
         setError("Popup was blocked by your browser. Please allow popups and try again.");
-        setLoading(false);
+        setSocialLoading(null);
         return;
       }
 
       const onStorage = (e: StorageEvent) => {
-        console.log("[Landing] Storage event:", e.key, e.newValue);
         if (e.key !== "calendar_auth_status") return;
         window.removeEventListener("storage", onStorage);
         clearTimeout(fallbackTimer);
 
         try {
-          const data = JSON.parse(e.newValue ?? "{}");
-          console.log("[Landing] Auth callback data:", data);
-          if (data.status === "authorized" && data.provider === provider) {
-            console.log("[Landing] Auth success! Redirecting to dashboard");
-            localStorage.setItem("calendar_connection", JSON.stringify({ connected: true, provider, email }));
-            router.push("/dashboard");
+          const callbackData = JSON.parse(e.newValue ?? "{}");
+          if (callbackData.status === "authorized" && callbackData.provider === provider) {
+            const oauthEmail = callbackData.email;
+            if (!oauthEmail) {
+              setError("Could not retrieve email from OAuth. Try again.");
+              setSocialLoading(null);
+              return;
+            }
+            loginWithOAuth(oauthEmail, provider)
+              .then(handleAuthSuccess)
+              .catch(() => {
+                setError("Failed to complete login after OAuth");
+                setSocialLoading(null);
+              });
+          } else {
+            setSocialLoading(null);
           }
-        } catch (err) { console.error("[Landing] Failed to parse auth callback:", err); }
+        } catch {
+          setSocialLoading(null);
+        }
 
-        setLoading(false);
         localStorage.removeItem("calendar_auth_status");
       };
 
       window.addEventListener("storage", onStorage);
       const fallbackTimer = setTimeout(() => {
-        console.log("[Landing] Auth timeout (120s) — cleaning up");
         window.removeEventListener("storage", onStorage);
-        setLoading(false);
+        setSocialLoading(null);
       }, 120_000);
-
-    } catch (err) {
-      console.error("[Landing] handleGetStarted FAILED:", err);
-      setError("Failed to connect. Is the backend running?");
-      setLoading(false);
+    } catch {
+      setError("Failed to start OAuth flow. Is the backend running?");
+      setSocialLoading(null);
     }
   };
 
+  const isLoading = loading || !!socialLoading;
+
   return (
-    <div className="landing">
+    <div className="auth-page">
       <nav className="landing-nav">
         <div className="landing-nav-logo">
           <div className="logo-icon"><CalendarCog size={16} /></div>
@@ -95,38 +125,151 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      <section className="hero">
-        <div className="hero-badge">AI-Powered Calendar Scheduling</div>
-        <h1 className="hero-title">Your calendar,<br />intelligently managed</h1>
-        <p className="hero-subtitle">
-          Connect your Google or Microsoft calendar. Smart Orchestrator auto-detects your provider,
-          infers task priority with AI, and keeps your schedule organized.
-        </p>
+      <div className="auth-container">
+        <div className="auth-card">
+          <h1 className="auth-title">Welcome</h1>
+          <p className="auth-subtitle">
+            {tab === "login" ? "Sign in to your account" : "Create a new account"}
+          </p>
 
-        <div className="hero-form">
-          <div className="hero-input-wrapper">
-            <Mail size={16} className="hero-input-icon" />
-            <input
-              className="hero-input"
-              type="email"
-              placeholder="Enter your work or personal email"
-              value={email}
-              onChange={e => { setEmail(e.target.value); setError(null); }}
-              onKeyDown={e => e.key === "Enter" && !loading && handleGetStarted()}
-              disabled={loading}
-            />
+          <div className="auth-tabs">
+            <button
+              className={`auth-tab ${tab === "login" ? "active" : ""}`}
+              onClick={() => { setTab("login"); setError(null); }}
+            >
+              Login
+            </button>
+            <button
+              className={`auth-tab ${tab === "signup" ? "active" : ""}`}
+              onClick={() => { setTab("signup"); setError(null); }}
+            >
+              Sign Up
+            </button>
           </div>
-          <button className="hero-btn" onClick={handleGetStarted} disabled={loading || !email}>
-            {loading ? (
-              <><Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Connecting…</>
-            ) : (
-              <>Get Started <ArrowRight size={16} /></>
-            )}
-          </button>
-          {error && <div className="hero-error">{error}</div>}
-          <p className="hero-hint">We'll auto-detect if it's Google or Microsoft</p>
+
+          {tab === "login" ? (
+            <>
+              <div className="form-group">
+                <div className="hero-input-wrapper">
+                  <Mail size={16} className="hero-input-icon" />
+                  <input
+                    className="hero-input"
+                    type="email"
+                    placeholder="Email address"
+                    value={email}
+                    onChange={e => { setEmail(e.target.value); setError(null); }}
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+              <div className="form-group">
+                <div className="hero-input-wrapper">
+                  <Lock size={16} className="hero-input-icon" />
+                  <input
+                    className="hero-input"
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={e => { setPassword(e.target.value); setError(null); }}
+                    onKeyDown={e => e.key === "Enter" && !isLoading && handleLogin()}
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+              <button className="hero-btn" onClick={handleLogin} disabled={isLoading}>
+                {loading ? (
+                  <><Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Logging in…</>
+                ) : (
+                  <>Log In <ArrowRight size={16} /></>
+                )}
+              </button>
+
+              <div className="auth-divider">
+                <div className="auth-divider-line" />
+                <span className="auth-divider-text">or sign in with</span>
+                <div className="auth-divider-line" />
+              </div>
+
+              <button
+                className="social-btn"
+                onClick={() => handleSocialLogin("google")}
+                disabled={isLoading}
+              >
+                {socialLoading === "google" ? (
+                  <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
+                ) : (
+                  <Calendar size={16} />
+                )}
+                Continue with Google
+              </button>
+              <button
+                className="social-btn"
+                onClick={() => handleSocialLogin("microsoft")}
+                disabled={isLoading}
+              >
+                {socialLoading === "microsoft" ? (
+                  <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
+                ) : (
+                  <Shield size={16} />
+                )}
+                Continue with Microsoft
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="form-group">
+                <div className="hero-input-wrapper">
+                  <User size={16} className="hero-input-icon" />
+                  <input
+                    className="hero-input"
+                    type="text"
+                    placeholder="Full name"
+                    value={name}
+                    onChange={e => { setName(e.target.value); setError(null); }}
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+              <div className="form-group">
+                <div className="hero-input-wrapper">
+                  <Mail size={16} className="hero-input-icon" />
+                  <input
+                    className="hero-input"
+                    type="email"
+                    placeholder="Email address"
+                    value={email}
+                    onChange={e => { setEmail(e.target.value); setError(null); }}
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+              <div className="form-group">
+                <div className="hero-input-wrapper">
+                  <Lock size={16} className="hero-input-icon" />
+                  <input
+                    className="hero-input"
+                    type="password"
+                    placeholder="Password (min 6 characters)"
+                    value={password}
+                    onChange={e => { setPassword(e.target.value); setError(null); }}
+                    onKeyDown={e => e.key === "Enter" && !isLoading && handleSignup()}
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+              <button className="hero-btn" onClick={handleSignup} disabled={isLoading}>
+                {loading ? (
+                  <><Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Creating account…</>
+                ) : (
+                  <>Create Account <ArrowRight size={16} /></>
+                )}
+              </button>
+            </>
+          )}
+
+          {error && <div className="auth-error">{error}</div>}
         </div>
-      </section>
+      </div>
 
       <section className="features">
         <div className="features-grid">

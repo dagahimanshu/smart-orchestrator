@@ -3,7 +3,7 @@
 import { Dispatch, SetStateAction, useState, useEffect } from "react";
 import { LogOut, Trash2, Send } from "lucide-react";
 import { ConnectionState, Provider } from "@/types";
-import { disconnectProvider, requestDelegateAccess, listDelegates, removeDelegate, DelegateInfo } from "@/lib/api";
+import { disconnectProvider, requestDelegateAccess, listDelegates, removeDelegate, clearToken, DelegateInfo } from "@/lib/api";
 
 interface Props {
   connection: ConnectionState;
@@ -34,6 +34,7 @@ export default function SettingsView({ connection, setConnection }: Props) {
     if (connection.provider) {
       await disconnectProvider(connection.provider);
     }
+    clearToken();
     setConnection({ connected: false, provider: null, email: null });
   };
 

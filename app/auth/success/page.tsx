@@ -6,11 +6,12 @@ import { Suspense } from "react";
 function AuthSuccessInner() {
   const params = useSearchParams();
   const provider = params.get("provider") ?? "google";
+  const email = params.get("email") ?? "";
 
   useEffect(() => {
-    localStorage.setItem("calendar_auth_status", JSON.stringify({ provider, status: "authorized" }));
+    localStorage.setItem("calendar_auth_status", JSON.stringify({ provider, status: "authorized", email }));
     window.close();
-  }, [provider]);
+  }, [provider, email]);
 
   return (
     <div style={{ fontFamily: "sans-serif", padding: 40, textAlign: "center" }}>
