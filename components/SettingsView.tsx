@@ -1,9 +1,10 @@
 "use client";
 
 import { Dispatch, SetStateAction, useState, useEffect } from "react";
-import { LogOut, Trash2, Send } from "lucide-react";
+import { LogOut, Trash2, Send, Sun, Moon, Monitor } from "lucide-react";
 import { ConnectionState, Provider } from "@/types";
 import { disconnectProvider, requestDelegateAccess, listDelegates, removeDelegate, clearToken, DelegateInfo } from "@/lib/api";
+import { useTheme } from "./ThemeProvider";
 
 interface Props {
   connection: ConnectionState;
@@ -19,6 +20,7 @@ function detectProvider(email: string, fallback: Provider | null): Provider {
 export default function SettingsView({ connection, setConnection }: Props) {
   const providerLabel = "Google";
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const { theme, setTheme } = useTheme();
 
   const [delegates, setDelegates] = useState<DelegateInfo[]>([]);
   const [requestEmail, setRequestEmail] = useState("");
@@ -135,7 +137,20 @@ export default function SettingsView({ connection, setConnection }: Props) {
       </div>
 
       <div className="settings-section">
-        <div className="settings-title">Danger Zone</div>
+        <div className="settings-title">Appearance</div>
+        <div className="settings-card">
+          <div className="settings-row">
+            <span className="settings-label">Theme</span>
+            <div className="theme-toggle">
+              <button className={`theme-btn ${theme === "light" ? "active" : ""}`} onClick={() => setTheme("light")} title="Light"><Sun size={13} /> Light</button>
+              <button className={`theme-btn ${theme === "system" ? "active" : ""}`} onClick={() => setTheme("system")} title="System"><Monitor size={13} /> System</button>
+              <button className={`theme-btn ${theme === "dark" ? "active" : ""}`} onClick={() => setTheme("dark")} title="Dark"><Moon size={13} /> Dark</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="settings-section">
         <button className="disconnect-full-btn" onClick={handleDisconnect}>
           <LogOut size={14} />
           Disconnect Calendar

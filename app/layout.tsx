@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Mono, Sora } from "next/font/google";
+import ThemeProvider from "@/components/ThemeProvider";
 import "./globals.css";
 
 const sora = Sora({
@@ -21,8 +22,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${sora.variable} ${dmMono.variable}`}>
-      <body>{children}</body>
+    <html lang="en" className={`${sora.variable} ${dmMono.variable}`} suppressHydrationWarning>
+      <body>
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }
