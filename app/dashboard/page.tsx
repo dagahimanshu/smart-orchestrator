@@ -21,6 +21,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
   const [connectingCalendar, setConnectingCalendar] = useState(false);
+  const [calendarStartDate, setCalendarStartDate] = useState<string | undefined>();
   const [connection, setConnection] = useState<ConnectionState>({
     connected: false,
     provider: null,
@@ -187,18 +188,20 @@ export default function DashboardPage() {
             setLoading={setLoading}
             onAddTask={() => openModal()}
             connection={connection}
+            onDateClick={(date) => { setCalendarStartDate(date); setActiveTab("calendar"); }}
           />
         )}
         {activeTab === "calendar" && provider && (
           <CalendarView
             provider={provider}
             onCreateAtSlot={(slot: TimeSlot) => openModal(slot)}
+            initialDate={calendarStartDate}
           />
         )}
         {activeTab === "tasks" && provider && (
           <div className="tasks-split">
             <div className="tasks-split-main">
-              <TasksView provider={provider} onAddTask={() => openModal()} />
+              <TasksView provider={provider} onAddTask={(date) => openModal(date ? { date } : undefined)} />
             </div>
             <div className="tasks-split-cal">
               <CalendarView provider={provider} onCreateAtSlot={(slot: TimeSlot) => openModal(slot)} singleDay />

@@ -15,6 +15,7 @@ interface Props {
   provider: Provider;
   onCreateAtSlot?: (slot: TimeSlot) => void;
   singleDay?: boolean;
+  initialDate?: string;
 }
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
@@ -73,8 +74,12 @@ function getMinutesFromY(clientY: number, scrollRef: React.RefObject<HTMLDivElem
   return Math.round(Math.max(0, Math.min(1439, y)) / 15) * 15;
 }
 
-export default function CalendarView({ provider, onCreateAtSlot, singleDay = false }: Props) {
-  const [weekStartKey, setWeekStartKey] = useState(() => formatDateKey(new Date()));
+export default function CalendarView({ provider, onCreateAtSlot, singleDay = false, initialDate }: Props) {
+  const [weekStartKey, setWeekStartKey] = useState(() => initialDate ?? formatDateKey(new Date()));
+
+  useEffect(() => {
+    if (initialDate) setWeekStartKey(initialDate);
+  }, [initialDate]);
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);

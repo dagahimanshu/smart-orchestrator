@@ -7,7 +7,7 @@ import { getWeekEvents, updateEvent } from "@/lib/api";
 
 interface Props {
   provider: Provider;
-  onAddTask: () => void;
+  onAddTask: (date?: string) => void;
 }
 
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -169,7 +169,7 @@ export default function TasksView({ provider, onAddTask }: Props) {
                   <div className="tv-col-date">{MONTH_NAMES[day.getMonth()]} {day.getDate()}</div>
                 </div>
 
-                <button className="tv-add-row" onClick={onAddTask}>
+                <button className="tv-add-row" onClick={() => onAddTask(dayKey)}>
                   <Plus size={13} /> Add task
                   <span className="tv-add-hours">{totalHours(dayEvents)}</span>
                 </button>

@@ -1,9 +1,9 @@
 "use client";
 
-import { Dispatch, SetStateAction, useEffect } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Plus, RefreshCw, ExternalLink, Calendar, Clock, AlertTriangle } from "lucide-react";
 import { Event, ConnectionState } from "@/types";
-import { getNextDayEvents } from "@/lib/api";
+import { getNextDayEvents, getWeekEvents } from "@/lib/api";
 
 interface Props {
   events: Event[];
@@ -12,6 +12,7 @@ interface Props {
   setLoading: Dispatch<SetStateAction<boolean>>;
   onAddTask: () => void;
   connection: ConnectionState;
+  onDateClick?: (date: string) => void;
 }
 
 function formatTime(iso: string) {
@@ -38,19 +39,27 @@ function priorityClass(p?: string | null) {
   }
 }
 
-function DateStrip() {
+function formatDateKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function DateStrip({ onDateClick, events }: { onDateClick?: (date: string) => void; events: Event[] }) {
   const today = new Date();
   const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(today); d.setDate(today.getDate() + i); return d; });
   const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
   return (
     <div className="date-strip">
-      {days.map((d, i) => (
-        <div key={i} className={`date-pill ${i === 0 ? "today" : ""}`}>
-          <span className="date-day">{DAYS[d.getDay()]}</span>
-          <span className="date-num">{d.getDate()}</span>
-          {i <= 2 && <span className="date-dot" />}
-        </div>
-      ))}
+      {days.map((d, i) => {
+        const key = formatDateKey(d);
+        const hasEvents = events.some(ev => ev.start.split("T")[0] === key);
+        return (
+          <button key={i} className={`date-pill ${i === 0 ? "today" : ""}`} onClick={() => onDateClick?.(key)}>
+            <span className="date-day">{DAYS[d.getDay()]}</span>
+            <span className="date-num">{d.getDate()}</span>
+            {hasEvents && <span className="date-dot" />}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -68,7 +77,7 @@ function SkeletonCard() {
   );
 }
 
-export default function Dashboard({ events, setEvents, loading, setLoading, onAddTask, connection }: Props) {
+export default function Dashboard({ events, setEvents, loading, setLoading, onAddTask, connection, onDateClick }: Props) {
   const fetchEvents = async () => {
     if (!connection.connected || !connection.provider) return;
     setLoading(true);
@@ -77,7 +86,14 @@ export default function Dashboard({ events, setEvents, loading, setLoading, onAd
     finally { setLoading(false); }
   };
 
+  const [weekEvents, setWeekEvents] = useState<Event[]>([]);
+
   useEffect(() => { fetchEvents(); }, [connection.connected, connection.provider]); // eslint-disable-line
+
+  useEffect(() => {
+    if (!connection.connected || !connection.provider) return;
+    getWeekEvents(connection.provider, formatDateKey(new Date())).then(setWeekEvents).catch(() => {});
+  }, [connection.connected, connection.provider]);
 
   const urgent = events.filter(e => e.priority === "URGENT").length;
   const high   = events.filter(e => e.priority === "HIGH").length;
@@ -107,7 +123,7 @@ export default function Dashboard({ events, setEvents, loading, setLoading, onAd
         </div>
       )}
 
-      <DateStrip />
+      <DateStrip onDateClick={onDateClick} events={weekEvents} />
 
       <div className="stats-row">
         <div className="stat-card">
