@@ -506,18 +506,66 @@ body {
   font-family: var(--mono);
 }
 
-/* ── Tasks View ── */
-.tasks-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
-.tasks-day-group { margin-bottom: 24px; }
-.tasks-day-label { font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
-.task-item {
-  display: flex; align-items: center; gap: 12px; padding: 12px 16px;
-  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-  margin-bottom: 6px; transition: all var(--transition); cursor: pointer; text-decoration: none; color: inherit;
+/* ── Tasks View (Sunsama-style) ── */
+.tv { display: flex; flex-direction: column; height: 100%; }
+.tv-topbar { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 16px; gap: 10px; }
+.tv-columns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; flex: 1; }
+.tv-col {
+  display: flex; flex-direction: column; transition: all 0.15s ease;
 }
-.task-item:hover { box-shadow: var(--shadow); border-color: var(--border-strong); }
-.task-time-badge { font-size: 11px; font-family: var(--mono); color: var(--muted); min-width: 100px; }
-.task-title { font-size: 13px; font-weight: 500; color: var(--navy); flex: 1; }
+.tv-col-today { }
+.tv-col-dragover { background: #eff6ff; border-radius: 8px; }
+.tv-col-head { padding: 14px 14px 0; }
+.tv-col-dayname { font-size: 15px; font-weight: 700; color: var(--navy); }
+.tv-col-date { font-size: 12px; color: var(--muted); margin-top: 1px; }
+.tv-add-row {
+  display: flex; align-items: center; gap: 5px; padding: 8px 14px;
+  font-size: 12px; color: var(--muted); background: none; border: none;
+  border-bottom: 1px solid var(--border); cursor: pointer; transition: color 0.15s;
+}
+.tv-add-row:hover { color: var(--navy); }
+.tv-add-hours { margin-left: auto; font-size: 12px; font-family: var(--mono); color: var(--subtle); }
+.tv-cards { flex: 1; padding: 8px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+.tv-empty { font-size: 11px; color: var(--subtle); text-align: center; padding: 28px 8px; }
+.tv-card {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 12px; cursor: grab; transition: all 0.15s ease;
+}
+.tv-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-color: var(--border-strong); }
+.tv-card:active { cursor: grabbing; opacity: 0.8; }
+.tv-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; margin-bottom: 4px; }
+.tv-card-title { font-size: 13px; font-weight: 600; color: var(--navy); line-height: 1.35; word-break: break-word; }
+.tv-card-dur { font-size: 11px; font-family: var(--mono); color: var(--muted); flex-shrink: 0; white-space: nowrap; }
+.tv-card-desc { font-size: 11px; color: var(--muted); line-height: 1.4; margin-bottom: 6px; }
+.tv-card-bottom { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.tv-card-time {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 10px; font-weight: 600; font-family: var(--mono);
+  padding: 2px 6px; border-radius: 5px;
+}
+.tv-card-link { margin-left: auto; color: var(--subtle); opacity: 0.4; transition: opacity 0.15s; display: flex; }
+.tv-card-link:hover { opacity: 1; }
+
+/* ── Tasks + Calendar split layout ── */
+.tasks-split { display: flex; gap: 0; height: calc(100vh - 96px); }
+.tasks-split-main { flex: 1; min-width: 0; padding-right: 12px; }
+.tasks-split-cal {
+  width: 260px; flex-shrink: 0;
+  border-left: 1px solid var(--border); padding-left: 12px;
+  display: flex; flex-direction: column;
+}
+.tasks-split-cal > div { display: flex; flex-direction: column; flex: 1; }
+.tasks-split-cal .cal-grid-wrapper { flex: 1; display: flex; flex-direction: column; }
+.tasks-split-cal .cal-grid-scroll { flex: 1; }
+.tasks-split-cal .calendar-header { margin-bottom: 4px; }
+.tasks-split-cal .page-title { font-size: 14px; }
+.tasks-split-cal .cal-week-label { font-size: 11px; margin-bottom: 8px; }
+.tasks-split-cal .cal-nav-btn { padding: 3px 6px; font-size: 11px; }
+.tasks-split-cal .cal-grid-wrapper { border-radius: 8px; }
+.cal-single-day .cal-grid-body { grid-template-columns: 40px 1fr; }
+.cal-single-day .cal-time-label { font-size: 9px; }
+.cal-single-day .cal-event-title { font-size: 10px; }
+.cal-single-day .cal-event-time { font-size: 9px; }
 
 /* ── Settings View ── */
 .settings-section { margin-bottom: 32px; }

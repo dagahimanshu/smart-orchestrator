@@ -22,14 +22,25 @@ interface Props {
   preset?: ModalPreset;
 }
 
+function getDefaultTime(): { time: string; endTime: string } {
+  const now = new Date();
+  const h = now.getHours() + 1;
+  const startH = h > 23 ? 9 : h;
+  return {
+    time: `${String(startH).padStart(2, "0")}:00`,
+    endTime: `${String((startH + 1) % 24).padStart(2, "0")}:00`,
+  };
+}
+
 export default function AddTaskModal({ onClose, onAdd, setLoading, connection, preset }: Props) {
   const today = new Date().toISOString().split("T")[0];
+  const defaults = getDefaultTime();
   const [form, setForm] = useState({
     title: "",
     description: "",
     date: preset?.date ?? today,
-    time: preset?.time ?? "09:00",
-    endTime: preset?.endTime ?? "10:00",
+    time: preset?.time ?? defaults.time,
+    endTime: preset?.endTime ?? defaults.endTime,
     attachmentUrls: "",
     createMeetLink: false,
   });
@@ -62,6 +73,8 @@ export default function AddTaskModal({ onClose, onAdd, setLoading, connection, p
   const handleSubmit = async () => {
     if (!form.title || !form.date || !form.time) { setError("Title, date, and time are required."); return; }
     if (!connection.connected || !connection.provider) { setError("Connect a calendar first."); return; }
+    const selectedDateTime = new Date(`${form.date}T${form.time}:00`);
+    if (selectedDateTime < new Date()) { setError("Cannot create events in the past."); return; }
     setSubmitting(true); setLoading(true); setError(null);
     try {
       const res = await createTask({
@@ -115,15 +128,15 @@ export default function AddTaskModal({ onClose, onAdd, setLoading, connection, p
           <div className="form-row form-group" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
             <div>
               <label className="form-label">Date *</label>
-              <input className="form-input" type="date" value={form.date} onChange={e => set("date", e.target.value)} />
+              <input className="form-input" type="date" value={form.date} min={today} onChange={e => set("date", e.target.value)} />
             </div>
             <div>
               <label className="form-label">Start Time *</label>
-              <input className="form-input" type="time" value={form.time} onChange={e => set("time", e.target.value)} />
+              <input className="form-input" type="time" value={form.time} min={form.date === today ? `${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}` : undefined} onChange={e => set("time", e.target.value)} />
             </div>
             <div>
               <label className="form-label">End Time</label>
-              <input className="form-input" type="time" value={form.endTime} onChange={e => set("endTime", e.target.value)} />
+              <input className="form-input" type="time" value={form.endTime} min={form.time} onChange={e => set("endTime", e.target.value)} />
             </div>
           </div>
 

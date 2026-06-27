@@ -14,6 +14,7 @@ export interface TimeSlot {
 interface Props {
   provider: Provider;
   onCreateAtSlot?: (slot: TimeSlot) => void;
+  singleDay?: boolean;
 }
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
@@ -72,8 +73,8 @@ function getMinutesFromY(clientY: number, scrollRef: React.RefObject<HTMLDivElem
   return Math.round(Math.max(0, Math.min(1439, y)) / 15) * 15;
 }
 
-export default function CalendarView({ provider, onCreateAtSlot }: Props) {
-  const [weekStartKey, setWeekStartKey] = useState(() => formatDateKey(getWeekStart(new Date())));
+export default function CalendarView({ provider, onCreateAtSlot, singleDay = false }: Props) {
+  const [weekStartKey, setWeekStartKey] = useState(() => formatDateKey(new Date()));
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -87,12 +88,15 @@ export default function CalendarView({ provider, onCreateAtSlot }: Props) {
   const [selectEndMin, setSelectEndMin] = useState(0);
 
   const weekStart = new Date(weekStartKey + "T00:00:00");
-  const weekDays = Array.from({ length: 7 }, (_, i) => {
+  const dayCount = singleDay ? 1 : 7;
+  const weekDays = Array.from({ length: dayCount }, (_, i) => {
     const d = new Date(weekStart);
     d.setDate(d.getDate() + i);
     return d;
   });
-  const weekLabel = `${MONTH_NAMES[weekDays[0].getMonth()]} ${weekDays[0].getDate()} – ${MONTH_NAMES[weekDays[6].getMonth()]} ${weekDays[6].getDate()}, ${weekDays[6].getFullYear()}`;
+  const weekLabel = singleDay
+    ? `${DAY_NAMES[weekDays[0].getDay()]}, ${MONTH_NAMES[weekDays[0].getMonth()]} ${weekDays[0].getDate()}`
+    : `${MONTH_NAMES[weekDays[0].getMonth()]} ${weekDays[0].getDate()} – ${MONTH_NAMES[weekDays[6].getMonth()]} ${weekDays[6].getDate()}, ${weekDays[6].getFullYear()}`;
 
   useEffect(() => {
     const id = ++fetchIdRef.current;
@@ -107,9 +111,10 @@ export default function CalendarView({ provider, onCreateAtSlot }: Props) {
     if (scrollRef.current) scrollRef.current.scrollTop = 8 * 60;
   }, []);
 
-  const goToday = () => setWeekStartKey(formatDateKey(getWeekStart(new Date())));
-  const goPrev = () => { const d = new Date(weekStart); d.setDate(d.getDate() - 7); setWeekStartKey(formatDateKey(d)); };
-  const goNext = () => { const d = new Date(weekStart); d.setDate(d.getDate() + 7); setWeekStartKey(formatDateKey(d)); };
+  const step = singleDay ? 1 : 7;
+  const goToday = () => setWeekStartKey(formatDateKey(new Date()));
+  const goPrev = () => { const d = new Date(weekStart); d.setDate(d.getDate() - step); setWeekStartKey(formatDateKey(d)); };
+  const goNext = () => { const d = new Date(weekStart); d.setDate(d.getDate() + step); setWeekStartKey(formatDateKey(d)); };
 
   const todayKey = formatDateKey(new Date());
   const eventsForDay = (day: Date): Event[] => {
@@ -212,26 +217,37 @@ export default function CalendarView({ provider, onCreateAtSlot }: Props) {
 
   return (
     <div>
-      <div className="calendar-header">
-        <h1 className="page-title">Calendar</h1>
-        <div className="calendar-nav">
-          <button className="cal-nav-btn" onClick={goPrev}><ChevronLeft size={14} /></button>
-          <button className="cal-nav-btn today" onClick={goToday}>Today</button>
-          <button className="cal-nav-btn" onClick={goNext}><ChevronRight size={14} /></button>
+      {singleDay ? (
+        <div className="calendar-header">
+          <h1 className="page-title">Calendar</h1>
+          <div className="cal-week-label" style={{ margin: 0 }}>{weekLabel}</div>
         </div>
-      </div>
-      <div className="cal-week-label">{weekLabel}</div>
-
-      <div className="cal-grid-wrapper">
-        <div className="cal-day-headers">
-          <div className="cal-day-header cal-time-col" />
-          {weekDays.map((d, i) => (
-            <div key={i} className={`cal-day-header ${formatDateKey(d) === todayKey ? "is-today" : ""}`}>
-              <span className="cal-day-name">{DAY_NAMES[d.getDay()]}</span>
-              <span className="cal-day-num">{d.getDate()}</span>
+      ) : (
+        <>
+          <div className="calendar-header">
+            <h1 className="page-title">Calendar</h1>
+            <div className="calendar-nav">
+              <button className="cal-nav-btn" onClick={goPrev}><ChevronLeft size={14} /></button>
+              <button className="cal-nav-btn today" onClick={goToday}>Today</button>
+              <button className="cal-nav-btn" onClick={goNext}><ChevronRight size={14} /></button>
             </div>
-          ))}
-        </div>
+          </div>
+          <div className="cal-week-label">{weekLabel}</div>
+        </>
+      )}
+
+      <div className={`cal-grid-wrapper ${singleDay ? "cal-single-day" : ""}`}>
+        {!singleDay && (
+          <div className="cal-day-headers">
+            <div className="cal-day-header cal-time-col" />
+            {weekDays.map((d, i) => (
+              <div key={i} className={`cal-day-header ${formatDateKey(d) === todayKey ? "is-today" : ""}`}>
+                <span className="cal-day-name">{DAY_NAMES[d.getDay()]}</span>
+                <span className="cal-day-num">{d.getDate()}</span>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div
           className="cal-grid-scroll"

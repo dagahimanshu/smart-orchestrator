@@ -196,7 +196,14 @@ export default function DashboardPage() {
           />
         )}
         {activeTab === "tasks" && provider && (
-          <TasksView provider={provider} onAddTask={() => openModal()} />
+          <div className="tasks-split">
+            <div className="tasks-split-main">
+              <TasksView provider={provider} onAddTask={() => openModal()} />
+            </div>
+            <div className="tasks-split-cal">
+              <CalendarView provider={provider} onCreateAtSlot={(slot: TimeSlot) => openModal(slot)} singleDay />
+            </div>
+          </div>
         )}
         {activeTab === "settings" && (
           <SettingsView connection={connection} setConnection={setConnection} />

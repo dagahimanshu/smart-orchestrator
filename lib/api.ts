@@ -25,6 +25,7 @@ function authHeaders(): Record<string, string> {
   const token = getToken();
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (token) headers["Authorization"] = `Bearer ${token}`;
+  headers["X-Timezone"] = Intl.DateTimeFormat().resolvedOptions().timeZone;
   return headers;
 }
 
@@ -259,6 +260,49 @@ export async function getNextDayEvents(provider: Provider = "google"): Promise<E
   }
 }
 
+const mockCache: Record<string, Event[]> = {};
+
+function generateMockEvents(startDate: string): Event[] {
+  if (mockCache[startDate]) return mockCache[startDate];
+
+  const priorities: Array<"URGENT" | "HIGH" | "MEDIUM" | "LOW"> = ["URGENT", "HIGH", "MEDIUM", "LOW"];
+  const titles = [
+    "Team standup", "Design review", "Sprint planning", "Code review",
+    "1:1 with manager", "Deploy to staging", "Write unit tests", "Client demo",
+    "Architecture discussion", "Bug triage", "Lunch with team", "Release prep",
+    "Retrospective", "Pair programming", "Product sync",
+  ];
+
+  let seed = 0;
+  for (let i = 0; i < startDate.length; i++) seed += startDate.charCodeAt(i);
+  const rng = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+
+  const start = new Date(startDate + "T00:00:00");
+  const events: Event[] = [];
+  for (let d = 0; d < 7; d++) {
+    const day = new Date(start);
+    day.setDate(day.getDate() + d);
+    const count = Math.floor(rng() * 3) + 1;
+    for (let i = 0; i < count; i++) {
+      const hour = 9 + Math.floor(rng() * 9);
+      const eventStart = new Date(day);
+      eventStart.setHours(hour, 0, 0, 0);
+      const eventEnd = new Date(eventStart);
+      eventEnd.setHours(hour + 1);
+      events.push({
+        id: `mock-${d}-${i}`,
+        summary: titles[Math.floor(rng() * titles.length)],
+        start: eventStart.toISOString(),
+        end: eventEnd.toISOString(),
+        priority: priorities[Math.floor(rng() * priorities.length)],
+        status: "confirmed",
+      });
+    }
+  }
+  mockCache[startDate] = events;
+  return events;
+}
+
 export async function getWeekEvents(provider: Provider = "google", startDate: string): Promise<Event[]> {
   log("getWeekEvents →", provider, startDate);
   try {
@@ -274,6 +318,10 @@ export async function getWeekEvents(provider: Provider = "google", startDate: st
     return data;
   } catch (err) {
     log("getWeekEvents FAILED", err);
+    if (process.env.NODE_ENV === "development") {
+      log("getWeekEvents → returning mock data");
+      return generateMockEvents(startDate);
+    }
     throw err;
   }
 }
