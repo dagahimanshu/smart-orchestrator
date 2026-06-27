@@ -50,12 +50,13 @@ function priorityClass(p?: string | null): string {
 }
 
 function priorityAccent(p?: string | null): string {
+  const style = getComputedStyle(document.documentElement);
   switch (p?.toUpperCase()) {
-    case "URGENT": return "#ef4444";
-    case "HIGH": return "#f97316";
-    case "MEDIUM": return "#3b82f6";
-    case "LOW": return "#22c55e";
-    default: return "#94a3b8";
+    case "URGENT": return style.getPropertyValue("--urgent").trim() || "#ef4444";
+    case "HIGH": return style.getPropertyValue("--rose").trim() || "#f97316";
+    case "MEDIUM": return style.getPropertyValue("--blue-accent").trim() || "#3b82f6";
+    case "LOW": return style.getPropertyValue("--green-accent").trim() || "#22c55e";
+    default: return style.getPropertyValue("--subtle").trim() || "#94a3b8";
   }
 }
 

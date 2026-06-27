@@ -160,7 +160,7 @@ body {
   transition: all var(--transition); font-family: var(--font);
   display: flex; align-items: center; justify-content: center; gap: 8px;
 }
-.hero-btn:hover { background: #1E293B; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.hero-btn:hover { opacity: 0.85; transform: translateY(-1px); box-shadow: var(--shadow-md); }
 .hero-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 .hero-error { font-size: 12px; color: var(--urgent); text-align: left; font-family: var(--mono); width: 100%; }
 .hero-hint { font-size: 12px; color: var(--subtle); font-family: var(--mono); }
@@ -234,7 +234,7 @@ body {
   background: var(--amber-soft); border: 1px solid var(--amber-accent); border-radius: var(--radius-lg);
   padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between;
 }
-.connect-banner-text { font-size: 13px; color: #92400E; }
+.connect-banner-text { font-size: 13px; color: var(--amber-accent); }
 .connect-banner-btn {
   padding: 8px 16px; border-radius: var(--radius); border: none;
   background: var(--btn-bg); color: var(--btn-text); font-size: 12px; font-weight: 500;
@@ -317,7 +317,7 @@ body {
   font-size: 12px; font-weight: 500; cursor: pointer;
   transition: all var(--transition); font-family: var(--font);
 }
-.connect-btn:hover { background: #1E293B; }
+.connect-btn:hover { opacity: 0.85; }
 .connect-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .connect-error { font-size: 11px; color: var(--urgent); font-family: var(--mono); }
 
@@ -350,7 +350,7 @@ body {
   font-size: 13px; font-weight: 500; cursor: pointer;
   transition: all var(--transition); font-family: var(--font);
 }
-.add-task-btn:hover { background: #1E293B; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.add-task-btn:hover { opacity: 0.85; transform: translateY(-1px); box-shadow: var(--shadow-md); }
 .add-task-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 
 /* Provider badge in dashboard */
@@ -364,8 +364,8 @@ body {
 .provider-badge.google { background: var(--green-soft); color: var(--green-accent); }
 .provider-badge.microsoft { background: var(--blue-soft); color: var(--blue-accent); }
 .provider-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
-.provider-dot.google { background: #34A853; }
-.provider-dot.microsoft { background: #0078D4; }
+.provider-dot.google { background: var(--green-accent); }
+.provider-dot.microsoft { background: var(--blue-accent); }
 .provider-email { font-size: 11px; color: var(--muted); font-family: var(--mono); }
 
 /* Stats */
@@ -472,7 +472,7 @@ body {
 .btn-cancel { flex: 1; padding: 10px; border-radius: var(--radius); border: 1px solid var(--border); background: none; color: var(--muted); font-size: 13px; font-weight: 500; cursor: pointer; transition: all var(--transition); font-family: var(--font); }
 .btn-cancel:hover { border-color: var(--slate); color: var(--slate); }
 .btn-submit { flex: 2; padding: 10px; border-radius: var(--radius); border: none; background: var(--btn-bg); color: var(--btn-text); font-size: 13px; font-weight: 500; cursor: pointer; transition: all var(--transition); font-family: var(--font); display: flex; align-items: center; justify-content: center; gap: 8px; }
-.btn-submit:hover { background: #1E293B; }
+.btn-submit:hover { opacity: 0.85; }
 .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── Calendar View ── */
@@ -585,7 +585,7 @@ body {
   display: flex; flex-direction: column; transition: all 0.15s ease;
 }
 .tv-col-today { }
-.tv-col-dragover { background: #eff6ff; border-radius: 8px; }
+.tv-col-dragover { background: var(--blue-soft); border-radius: 8px; }
 .tv-col-head { padding: 14px 14px 0; }
 .tv-col-dayname { font-size: 15px; font-weight: 700; color: var(--navy); }
 .tv-col-date { font-size: 12px; color: var(--muted); margin-top: 1px; }
@@ -683,7 +683,7 @@ body {
   font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap;
   font-family: var(--font); transition: all 150ms;
 }
-.delegate-request-btn:hover { background: #1E293B; }
+.delegate-request-btn:hover { opacity: 0.85; }
 .delegate-request-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .delegate-status { font-size: 12px; margin-top: 8px; font-family: var(--mono); }
 .delegate-status.success { color: var(--green-accent); }
@@ -709,7 +709,7 @@ body {
   font-size: 14px; font-weight: 600; cursor: pointer;
   font-family: var(--font); transition: all 150ms;
 }
-.consent-btn:hover { background: #1E293B; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.consent-btn:hover { opacity: 0.85; transform: translateY(-1px); box-shadow: var(--shadow-md); }
 .consent-note { font-size: 12px; color: var(--subtle); margin-top: 20px; font-family: var(--mono); }
 
 @media (max-width: 900px) {

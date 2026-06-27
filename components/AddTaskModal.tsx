@@ -196,7 +196,7 @@ export default function AddTaskModal({ onClose, onAdd, setLoading, connection, p
           </div>
 
           {error && (
-            <div style={{ padding: "10px 12px", borderRadius: 8, background: "var(--urgent-soft)", border: "1px solid #FECACA", fontSize: 12, color: "var(--urgent)" }}>
+            <div style={{ padding: "10px 12px", borderRadius: 8, background: "var(--urgent-soft)", border: "1px solid var(--rose-border)", fontSize: 12, color: "var(--urgent)" }}>
               {error}
             </div>
           )}
