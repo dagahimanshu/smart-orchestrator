@@ -558,8 +558,8 @@ body {
 
 .cal-event.priority-urgent { background: var(--urgent-soft); color: var(--urgent); border-color: var(--urgent); }
 .cal-event.priority-high { background: var(--rose-soft); color: var(--rose); border-color: var(--rose); }
-.cal-event.priority-medium { background: var(--amber-soft); color: #92400E; border-color: var(--amber-accent); }
-.cal-event.priority-low { background: var(--green-soft); color: #065F46; border-color: var(--green-accent); }
+.cal-event.priority-medium { background: var(--amber-soft); color: var(--amber-accent); border-color: var(--amber-accent); }
+.cal-event.priority-low { background: var(--green-soft); color: var(--green-accent); border-color: var(--green-accent); }
 .cal-event.priority-default { background: var(--blue-soft); color: var(--blue-accent); border-color: var(--blue-accent); }
 
 .cal-now-line { position: absolute; left: 0; right: 0; height: 2px; background: var(--urgent); z-index: 4; pointer-events: none; }
