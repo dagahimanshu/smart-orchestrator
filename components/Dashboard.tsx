@@ -1,9 +1,9 @@
 "use client";
 
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { Plus, RefreshCw, ExternalLink, Calendar, Clock, AlertTriangle } from "lucide-react";
+import { Plus, RefreshCw, ExternalLink, Calendar, Clock, AlertTriangle, Trash2 } from "lucide-react";
 import { Event, ConnectionState } from "@/types";
-import { getNextDayEvents, getWeekEvents } from "@/lib/api";
+import { getNextDayEvents, getWeekEvents, deleteEvent } from "@/lib/api";
 
 interface Props {
   events: Event[];
@@ -16,6 +16,7 @@ interface Props {
 }
 
 function formatTime(iso: string) {
+  if (!iso.includes("T")) return "All day";
   return new Date(iso).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
 }
 function formatDate(iso: string) {
@@ -173,7 +174,7 @@ export default function Dashboard({ events, setEvents, loading, setLoading, onAd
             <p className="empty-text">Add a task to get started and it will show up here.</p>
           </div>
         ) : events.map((ev, i) => (
-          <a key={ev.id ?? i} href={ev.htmlLink ?? "#"} target="_blank" rel="noopener noreferrer" className="event-card">
+          <div key={ev.id ?? i} className="event-card">
             <div className="event-time-col">
               <div className="event-time">{formatTime(ev.start)}</div>
               <div className="event-date">{formatDate(ev.start)}</div>
@@ -187,8 +188,13 @@ export default function Dashboard({ events, setEvents, loading, setLoading, onAd
                 {ev.status === "confirmed" && <span style={{ fontSize: 11, color: "var(--green-accent)", fontFamily: "var(--mono)" }}>● confirmed</span>}
               </div>
             </div>
-            <ExternalLink size={14} className="event-link-icon" />
-          </a>
+            <button className="event-delete-btn" onClick={() => { if (ev.id) { setEvents(prev => prev.filter(e => e.id !== ev.id)); deleteEvent(ev.id, connection.provider ?? "google"); }}} title="Delete">
+              <Trash2 size={13} />
+            </button>
+            <a href={ev.htmlLink ?? "#"} target="_blank" rel="noopener noreferrer" className="event-link-icon">
+              <ExternalLink size={14} />
+            </a>
+          </div>
         ))}
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>

@@ -254,6 +254,28 @@ export default function CalendarView({ provider, onCreateAtSlot, singleDay = fal
           </div>
         )}
 
+        {(() => {
+          const hasAnyAllDay = weekDays.some(day => eventsForDay(day).some(ev => !ev.start.includes("T")));
+          if (!hasAnyAllDay) return null;
+          return (
+            <div className="cal-allday-row">
+              <div className="cal-allday-label">All day</div>
+              {weekDays.map((day, di) => {
+                const allDayEvents = eventsForDay(day).filter(ev => !ev.start.includes("T"));
+                return (
+                  <div key={di} className="cal-allday-cell">
+                    {allDayEvents.map((ev, ei) => (
+                      <div key={ev.id ?? ei} className={`cal-allday-event ${priorityClass(ev.priority)}`}
+                        onClick={() => { const link = ev.htmlLink || ev.eventLink; if (link) window.open(link, "_blank"); }}
+                      >{ev.summary}</div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
+
         <div
           className="cal-grid-scroll"
           ref={scrollRef}
@@ -269,7 +291,7 @@ export default function CalendarView({ provider, onCreateAtSlot, singleDay = fal
             {weekDays.map((day, di) => {
               const isToday = formatDateKey(day) === todayKey;
               const dayKey = formatDateKey(day);
-              const dayEvents = eventsForDay(day);
+              const dayEvents = eventsForDay(day).filter(ev => ev.start.includes("T"));
               const showSelection = selecting && selectDayKey === dayKey;
               return (
                 <div
@@ -306,7 +328,7 @@ export default function CalendarView({ provider, onCreateAtSlot, singleDay = fal
                       onMouseUp={(e) => { e.stopPropagation(); handleEventClick(ev); }}
                     >
                       <div className="cal-event-title">{ev.summary}</div>
-                      <div className="cal-event-time">{new Date(ev.start).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}</div>
+                      <div className="cal-event-time">{ev.start.includes("T") ? new Date(ev.start).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }) : "All day"}</div>
                     </div>
                   ))}
                 </div>

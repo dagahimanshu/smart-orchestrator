@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Plus, ExternalLink, ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { Plus, ExternalLink, ChevronLeft, ChevronRight, Clock, Trash2 } from "lucide-react";
 import { Event, Provider } from "@/types";
-import { getWeekEvents, updateEvent } from "@/lib/api";
+import { getWeekEvents, updateEvent, deleteEvent } from "@/lib/api";
 
 interface Props {
   provider: Provider;
@@ -17,11 +17,17 @@ function formatDateKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+function isAllDay(iso: string): boolean {
+  return !iso.includes("T");
+}
+
 function formatTime(iso: string): string {
+  if (isAllDay(iso)) return "All day";
   return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
 }
 
 function formatDuration(start: string, end?: string): string {
+  if (isAllDay(start)) return "All day";
   if (!end) return "1:00";
   const ms = new Date(end).getTime() - new Date(start).getTime();
   const h = Math.floor(ms / 3600000);
@@ -136,6 +142,16 @@ export default function TasksView({ provider, onAddTask }: Props) {
     }
   };
 
+  const handleDelete = async (ev: Event) => {
+    if (!ev.id) return;
+    setEvents(prev => prev.filter(e => e.id !== ev.id));
+    try {
+      await deleteEvent(ev.id, provider);
+    } catch {
+      getWeekEvents(provider, startKey).then(setEvents).catch(() => {});
+    }
+  };
+
   return (
     <div className="tv">
       <div className="tv-topbar">
@@ -195,6 +211,9 @@ export default function TasksView({ provider, onAddTask }: Props) {
                             <Clock size={10} /> {formatTime(ev.start)}
                           </span>
                           {ev.priority && <span className={`priority-badge ${priorityClass(ev.priority)}`}>{ev.priority}</span>}
+                          <button className="tv-card-delete" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(ev); }} title="Delete">
+                            <Trash2 size={11} />
+                          </button>
                           <a href={ev.htmlLink || ev.eventLink || "#"} target="_blank" rel="noopener noreferrer" className="tv-card-link" onClick={e => e.stopPropagation()}>
                             <ExternalLink size={11} />
                           </a>

@@ -1,7 +1,7 @@
 "use client";
 
 import { Dispatch, SetStateAction, useState } from "react";
-import { LayoutDashboard, ListTodo, CalendarDays, Settings, CalendarCog, CheckCircle2, Loader2, LogOut, Mail } from "lucide-react";
+import { LayoutDashboard, ListTodo, CalendarDays, Settings, CalendarCog, CheckCircle2, Loader2, LogOut, Mail, X } from "lucide-react";
 import { Tab, ConnectionState, Provider } from "@/types";
 import { detectProvider, getAuthUrl, disconnectProvider, clearToken } from "@/lib/api";
 
@@ -10,6 +10,8 @@ interface Props {
     setActiveTab: Dispatch<SetStateAction<Tab>>;
     connection: ConnectionState;
     setConnection: Dispatch<SetStateAction<ConnectionState>>;
+    mobileOpen?: boolean;
+    onClose?: () => void;
 }
 
 const NAV: { id: Tab; label: string; icon: React.ElementType }[] = [
@@ -19,7 +21,7 @@ const NAV: { id: Tab; label: string; icon: React.ElementType }[] = [
     { id: "settings",  label: "Settings",  icon: Settings },
 ];
 
-export default function Sidebar({ activeTab, setActiveTab, connection, setConnection }: Props) {
+export default function Sidebar({ activeTab, setActiveTab, connection, setConnection, mobileOpen, onClose }: Props) {
     const [email, setEmail] = useState("");
     const [detecting, setDetecting] = useState(false);
     const [connecting, setConnecting] = useState(false);
@@ -98,8 +100,15 @@ export default function Sidebar({ activeTab, setActiveTab, connection, setConnec
     const providerLabel = "Google";
     const isLoading = detecting || connecting;
 
+    const handleNavClick = (id: Tab) => {
+        setActiveTab(id);
+        onClose?.();
+    };
+
     return (
-        <aside className="sidebar">
+        <>
+        {mobileOpen && <div className="sidebar-backdrop" onClick={onClose} />}
+        <aside className={`sidebar ${mobileOpen ? "sidebar-open" : ""}`}>
             <div className="sidebar-logo">
                 <div className="logo-mark">
                     <div className="logo-icon"><CalendarCog size={16} /></div>
@@ -108,6 +117,7 @@ export default function Sidebar({ activeTab, setActiveTab, connection, setConnec
                         <div className="logo-title">Orchestrator</div>
                     </div>
                 </div>
+                <button className="sidebar-close" onClick={onClose}><X size={18} /></button>
                 <div className="logo-sub">Calendar · Automation</div>
             </div>
 
@@ -117,7 +127,7 @@ export default function Sidebar({ activeTab, setActiveTab, connection, setConnec
                     <button
                         key={id}
                         className={`nav-item ${activeTab === id ? "active" : ""}`}
-                        onClick={() => setActiveTab(id)}
+                        onClick={() => handleNavClick(id)}
                     >
                         <Icon size={15} />
                         {label}
@@ -172,5 +182,6 @@ export default function Sidebar({ activeTab, setActiveTab, connection, setConnec
             </div>
             <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </aside>
+        </>
     );
 }

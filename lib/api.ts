@@ -197,8 +197,9 @@ export interface CreateTaskPayload {
   title: string;
   description: string;
   date: string;
-  time: string;
+  time?: string;
   endTime?: string;
+  allDay?: boolean;
   priority?: string | null;
   createMeetLink: boolean;
   attachmentUrls?: string[];
@@ -342,6 +343,25 @@ export async function updateEvent(eventId: string, payload: { start: string; end
     }
   } catch (err) {
     log("updateEvent FAILED", err);
+    throw err;
+  }
+}
+
+export async function deleteEvent(eventId: string, provider: string = "google"): Promise<void> {
+  log("deleteEvent →", eventId, provider);
+  try {
+    const res = await fetch(`${BASE}/events/${encodeURIComponent(eventId)}?provider=${provider}`, {
+      method: "DELETE",
+      headers: authHeaders(),
+    });
+    log("deleteEvent response", res.status);
+    if (!res.ok) {
+      const text = await res.text();
+      log("deleteEvent error", text);
+      throw new Error(`Failed to delete event (${res.status})`);
+    }
+  } catch (err) {
+    log("deleteEvent FAILED", err);
     throw err;
   }
 }

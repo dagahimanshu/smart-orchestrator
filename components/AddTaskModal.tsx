@@ -44,6 +44,7 @@ export default function AddTaskModal({ onClose, onAdd, setLoading, connection, p
     attachmentUrls: "",
     createMeetLink: false,
   });
+  const [allDay, setAllDay] = useState(false);
   const [priority, setPriority] = useState<PriorityOpt>("MEDIUM");
   const [recurrence, setRecurrence] = useState<string>("NONE");
   const [recurrenceCount, setRecurrenceCount] = useState<string>("");
@@ -71,16 +72,19 @@ export default function AddTaskModal({ onClose, onAdd, setLoading, connection, p
   const meetLabel = "Create Google Meet link";
 
   const handleSubmit = async () => {
-    if (!form.title || !form.date || !form.time) { setError("Title, date, and time are required."); return; }
+    if (!form.title || !form.date) { setError("Title and date are required."); return; }
+    if (!allDay && !form.time) { setError("Start time is required for timed events."); return; }
     if (!connection.connected || !connection.provider) { setError("Connect a calendar first."); return; }
-    const selectedDateTime = new Date(`${form.date}T${form.time}:00`);
-    if (selectedDateTime < new Date()) { setError("Cannot create events in the past."); return; }
+    if (!allDay) {
+      const selectedDateTime = new Date(`${form.date}T${form.time}:00`);
+      if (selectedDateTime < new Date()) { setError("Cannot create events in the past."); return; }
+    }
     setSubmitting(true); setLoading(true); setError(null);
     try {
       const res = await createTask({
-        title: form.title, description: form.description, date: form.date, time: form.time,
-        endTime: form.endTime,
-        createMeetLink: form.createMeetLink,
+        title: form.title, description: form.description, date: form.date,
+        ...(allDay ? { allDay: true } : { time: form.time, endTime: form.endTime }),
+        createMeetLink: allDay ? false : form.createMeetLink,
         priority,
         provider: connection.provider,
         ...(recurrence !== "NONE" && { recurrence }),
@@ -88,7 +92,7 @@ export default function AddTaskModal({ onClose, onAdd, setLoading, connection, p
         ...(form.attachmentUrls && { attachmentUrls: form.attachmentUrls.split("\n").map(u => u.trim()).filter(Boolean) }),
         ...(delegateEmail && { delegateEmail }),
       });
-      onAdd({ summary: form.title, description: res.description, priority: res.priority as Event["priority"], start: `${form.date}T${form.time}:00`, htmlLink: res.eventLink, status: "confirmed" });
+      onAdd({ summary: form.title, description: res.description, priority: res.priority as Event["priority"], start: allDay ? form.date : `${form.date}T${form.time}:00`, htmlLink: res.eventLink, status: "confirmed" });
       onClose();
     } catch { setError("Failed to create event. Is the backend running?"); }
     finally { setSubmitting(false); setLoading(false); }
@@ -125,19 +129,30 @@ export default function AddTaskModal({ onClose, onAdd, setLoading, connection, p
             <textarea className="form-textarea" placeholder="Add details, context, or notes..." value={form.description} onChange={e => set("description", e.target.value)} />
           </div>
 
-          <div className="form-row form-group" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
+          <div className="form-group">
+            <label className="form-label" style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+              <input type="checkbox" checked={allDay} onChange={e => setAllDay(e.target.checked)} style={{ width: 16, height: 16, accentColor: "var(--blue-accent)" }} />
+              All day task
+            </label>
+          </div>
+
+          <div className={`form-row form-group ${allDay ? "form-row-1" : "form-row-3"}`}>
             <div>
               <label className="form-label">Date *</label>
               <input className="form-input" type="date" value={form.date} min={today} onChange={e => set("date", e.target.value)} />
             </div>
-            <div>
-              <label className="form-label">Start Time *</label>
-              <input className="form-input" type="time" value={form.time} min={form.date === today ? `${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}` : undefined} onChange={e => set("time", e.target.value)} />
-            </div>
-            <div>
-              <label className="form-label">End Time</label>
-              <input className="form-input" type="time" value={form.endTime} min={form.time} onChange={e => set("endTime", e.target.value)} />
-            </div>
+            {!allDay && (
+              <div>
+                <label className="form-label">Start Time *</label>
+                <input className="form-input" type="time" value={form.time} min={form.date === today ? `${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}` : undefined} onChange={e => set("time", e.target.value)} />
+              </div>
+            )}
+            {!allDay && (
+              <div>
+                <label className="form-label">End Time</label>
+                <input className="form-input" type="time" value={form.endTime} min={form.time} onChange={e => set("endTime", e.target.value)} />
+              </div>
+            )}
           </div>
 
           <div className="form-group">

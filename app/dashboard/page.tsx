@@ -10,7 +10,7 @@ import SettingsView from "@/components/SettingsView";
 import AddTaskModal, { ModalPreset } from "@/components/AddTaskModal";
 import { clearToken, getMe, getAuthUrl, connectCalendar } from "@/lib/api";
 import { Event, Tab, ConnectionState, Provider } from "@/types";
-import { CalendarCog, Loader2 } from "lucide-react";
+import { CalendarCog, Loader2, Menu } from "lucide-react";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -22,6 +22,8 @@ export default function DashboardPage() {
   const [ready, setReady] = useState(false);
   const [connectingCalendar, setConnectingCalendar] = useState(false);
   const [calendarStartDate, setCalendarStartDate] = useState<string | undefined>();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [connection, setConnection] = useState<ConnectionState>({
     connected: false,
     provider: null,
@@ -150,11 +152,16 @@ export default function DashboardPage() {
 
   return (
     <div className="app-shell">
+      <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}>
+        <Menu size={20} />
+      </button>
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         connection={connection}
         setConnection={setConnection}
+        mobileOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
       <main className="main-content">
         {!connection.connected && (
@@ -182,6 +189,7 @@ export default function DashboardPage() {
 
         {activeTab === "dashboard" && (
           <Dashboard
+            key={refreshKey}
             events={events}
             setEvents={setEvents}
             loading={loading}
@@ -193,13 +201,14 @@ export default function DashboardPage() {
         )}
         {activeTab === "calendar" && provider && (
           <CalendarView
+            key={refreshKey}
             provider={provider}
             onCreateAtSlot={(slot: TimeSlot) => openModal(slot)}
             initialDate={calendarStartDate}
           />
         )}
         {activeTab === "tasks" && provider && (
-          <div className="tasks-split">
+          <div className="tasks-split" key={refreshKey}>
             <div className="tasks-split-main">
               <TasksView provider={provider} onAddTask={(date) => openModal(date ? { date } : undefined)} />
             </div>
@@ -223,7 +232,7 @@ export default function DashboardPage() {
       {showModal && (
         <AddTaskModal
           onClose={() => { setShowModal(false); setModalPreset(undefined); }}
-          onAdd={(e) => setEvents((prev) => [...prev, e])}
+          onAdd={(e) => { setEvents((prev) => [...prev, e]); setRefreshKey(k => k + 1); }}
           setLoading={setLoading}
           connection={connection}
           preset={modalPreset}
